@@ -113,7 +113,7 @@ i.ph, i.ph-fill, i.ph-bold { line-height: 1; vertical-align: -.125em; }
 }
 .brand { display: inline-flex; gap: .5rem; align-items: center; font-family: var(--font-head); font-weight: 600; font-size: .95rem; color: var(--text); text-decoration: none; }
 .brand-mark { inline-size: 1.6rem; block-size: 1.6rem; border-radius: 7px; color: #fff; background: linear-gradient(135deg, #8b5cf6, #5b21b6); display: grid; place-items: center; font-size: 1rem; box-shadow: inset 0 1px 0 rgb(255 255 255 / .25); }
-.breadcrumbs { flex: 1; min-inline-size: 0; display: flex; align-items: center; gap: .45rem; justify-content: center; font-family: var(--font-head); font-size: .92rem; white-space: nowrap; }
+.breadcrumbs { flex: 0 1 auto; min-inline-size: 0; display: flex; align-items: center; gap: .45rem; justify-content: flex-start; font-family: var(--font-head); font-size: .92rem; white-space: nowrap; }
 .breadcrumbs a { color: var(--muted); text-decoration: none; transition: color .12s; }
 .breadcrumbs a:hover { color: var(--accent); }
 .breadcrumbs i { flex: none; color: var(--muted); font-size: .78rem; }
@@ -130,7 +130,7 @@ i.ph, i.ph-fill, i.ph-bold { line-height: 1; vertical-align: -.125em; }
 .breadcrumb-menu-item i { color: var(--accent); }
 .breadcrumb-menu-empty { display: block; padding: .55rem .65rem; color: var(--muted); font-size: .88rem; }
 .site-header .spacer { flex: 1; }
-.header-actions { display: flex; gap: .4rem; }
+.header-actions { margin-inline-start: auto; display: flex; gap: .4rem; }
 @media (max-width: 760px) { .header-actions .lbl, .brand .brand-name { display: none; } }
 .site-footer { margin-block-start: 4rem; padding: 2rem 1rem; color: var(--muted); font-size: .85rem; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: center; gap: .5rem; flex-wrap: wrap; text-align: center; }
 .footer-repo { color: inherit; display: inline-flex; align-items: center; font-size: 1.2rem; text-decoration: none; transition: color .12s; }

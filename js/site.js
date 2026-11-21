@@ -122,8 +122,8 @@
   }
 
   /* ---------- chrome ---------- */
-  const brandHtml = () =>
-    `<a class="brand" href="/" aria-label="${esc(CONFIG.siteTitle)} home"><span class="brand-mark" aria-hidden="true"><i class="ph-fill ph-atom"></i></span><span class="brand-name">${esc(CONFIG.siteTitle)}</span></a>`;
+  const brandHtml = (label = CONFIG.siteTitle) =>
+    `<a class="brand" href="/" aria-label="${esc(label)} home"><span class="brand-mark" aria-hidden="true"><i class="ph-fill ph-atom"></i></span><span class="brand-name">${esc(label)}</span></a>`;
   const themeBtn = '<button class="btn icon" id="theme-toggle" type="button" aria-label="Toggle light/dark theme" title="Light / dark"><i class="ph ph-circle-half"></i></button>';
 
   function initDemoSwitcher(header, metaData, rootPath) {
@@ -190,8 +190,8 @@
     const header = document.createElement('header');
     header.className = 'site-header';
     if (isDemo) {
-      header.innerHTML = brandHtml() +
-        `<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/demos">Interactive Demos</a><i class="ph ph-caret-right" aria-hidden="true"></i><div class="breadcrumb-current-wrap"><button class="breadcrumb-current" type="button" aria-haspopup="menu" aria-expanded="false"><span aria-current="page">${esc((m && m.title) || '')}</span><i class="ph ph-caret-down" aria-hidden="true"></i></button><div class="breadcrumb-menu" role="menu" hidden></div></div></nav>` +
+      header.innerHTML = brandHtml('Physics Tools') +
+        `<nav class="breadcrumbs" aria-label="Breadcrumb"><i class="ph ph-caret-right breadcrumb-separator" aria-hidden="true"></i><a href="/demos">Interactive Demos</a><i class="ph ph-caret-right" aria-hidden="true"></i><div class="breadcrumb-current-wrap"><button class="breadcrumb-current" type="button" aria-haspopup="menu" aria-expanded="false"><span aria-current="page">${esc((m && m.title) || '')}</span><i class="ph ph-caret-down" aria-hidden="true"></i></button><div class="breadcrumb-menu" role="menu" hidden></div></div></nav>` +
         '<div class="header-actions"></div>';
     } else {
       header.innerHTML = brandHtml() + '<div class="spacer"></div>' + themeBtn;
