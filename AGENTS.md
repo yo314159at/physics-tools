@@ -1,4 +1,4 @@
-# AGENTS.md: building and extending Physics Demos
+# AGENTS.md: building and extending Physics Tools
 
 For AI coding agents and human contributors. Read this fully before adding or changing anything. It is self-contained: you do not need any other tool or skill.
 

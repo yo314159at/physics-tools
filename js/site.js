@@ -6,7 +6,7 @@
   'use strict';
 
   const CONFIG = {
-    siteTitle: 'Physics Demos',
+    siteTitle: 'Physics Tools',
     footer: '(Likely spaghetti) coded by AI',
     repoUrl: 'https://github.com/yo314159at/physics-demos',
     katexVersion: '0.16.11',
@@ -185,14 +185,19 @@
 
   function buildChrome() {
     const isDemo = document.body.classList.contains('demo');
+    const isCatalog = document.querySelector('.chips') && document.querySelector('.catalog');
     const m = meta();
     const rootPath = root.dataset.root || '';
     const header = document.createElement('header');
     header.className = 'site-header';
     if (isDemo) {
-      header.innerHTML = brandHtml('Physics Tools') +
+      header.innerHTML = brandHtml() +
         `<nav class="breadcrumbs" aria-label="Breadcrumb"><i class="ph ph-caret-right breadcrumb-separator" aria-hidden="true"></i><a href="/demos">Interactive Demos</a><i class="ph ph-caret-right" aria-hidden="true"></i><div class="breadcrumb-current-wrap"><button class="breadcrumb-current" type="button" aria-haspopup="menu" aria-expanded="false"><span aria-current="page">${esc((m && m.title) || '')}</span><i class="ph ph-caret-down" aria-hidden="true"></i></button><div class="breadcrumb-menu" role="menu" hidden></div></div></nav>` +
         '<div class="header-actions"></div>';
+    } else if (isCatalog) {
+      header.innerHTML = brandHtml() +
+        '<nav class="breadcrumbs" aria-label="Breadcrumb"><i class="ph ph-caret-right breadcrumb-separator" aria-hidden="true"></i><span aria-current="page">Interactive Demos</span></nav>' +
+        '<div class="spacer"></div>' + themeBtn;
     } else {
       header.innerHTML = brandHtml() + '<div class="spacer"></div>' + themeBtn;
     }
@@ -231,6 +236,7 @@
       });
     }
     if (m && m.title) document.title = `${m.title} · ${CONFIG.siteTitle}`;
+    else if (isCatalog) document.title = `Interactive Demos · ${CONFIG.siteTitle}`;
     else if (document.querySelector('.catalog')) document.title = CONFIG.siteTitle;
   }
 
