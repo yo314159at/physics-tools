@@ -8,7 +8,7 @@
   const CONFIG = {
     siteTitle: 'Physics Tools',
     footer: '(Likely spaghetti) coded by AI',
-    repoUrl: 'https://github.com/yo314159at/physics-demos',
+    repoUrl: 'https://github.com/yo314159at/physics-tools',
     katexVersion: '0.16.11',
     phosphorVersion: '2.1.1',
     fonts: 'https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Sora:wght@500;600&display=swap'

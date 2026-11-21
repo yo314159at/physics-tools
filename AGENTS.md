@@ -2,7 +2,7 @@
 
 For AI coding agents and human contributors. Read this fully before adding or changing anything. It is self-contained: you do not need any other tool or skill.
 
-Live site: https://physics-demos.yo314159.at/  ·  Repo: https://github.com/yo314159at/physics-demos  ·  License: CC0 (your contribution is public domain).
+Live site: https://physics.yo314159.at/  ·  Repo: https://github.com/yo314159at/physics-tools  ·  License: CC0 (your contribution is public domain).
 
 > **Source of truth:** `css/site.css`, `js/site.js`, `js/sim.js` and the existing demos. If this document and the code disagree, the code wins: fix this document in the same change.
 
