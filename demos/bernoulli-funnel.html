@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en" data-root="../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bernoulli Funnel</title>
+<script>/* apply saved theme before first paint (no flash) */(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t}catch(e){}})()</script>
+<link rel="stylesheet" href="../css/site.css">
+<script src="../js/site.js" defer></script>
+<script src="../js/sim.js" defer></script>
+<script type="application/json" id="demo-meta">
+{
+  "id": "bernoulli-funnel",
+  "title": "Bernoulli Funnel",
+  "summary": "Flip the cup and funnel, change the airflow, and push the ball where faster flow holds it in place.",
+  "topic": "fluids",
+  "level": "high-school",
+  "order": 10
+}
+</script>
+</head>
+<body class="demo">
+
+<div id="more" hidden>
+  <section data-title="Predict first" data-icon="ph-question">
+    <p class="predict-q">A ping-pong ball is at the mouth of an inverted funnel. Why does fast air blowing upward keep the ball from falling out?</p>
+    <details class="reveal"><summary>Show the answer</summary>
+      <p>Moving air in the gap has a lower effective pressure than the still air around the ball. That pressure difference plus the funnel walls pushes the ball back toward the constricted region.</p></details>
+  </section>
+  <section data-title="What to notice" data-icon="ph-eye">
+    <ul>
+      <li>Increase the airflow. The ball's equilibrium position moves farther out while gravity and the pressure restoring force balance.</li>
+      <li>Try pulling the ball away from the funnel. It is returned toward the constriction in the inverted orientation.</li>
+      <li>Flip the funnel upright and release the ball. Gravity no longer has to be balanced by the trapping pressure.</li>
+    </ul>
+    <div class="callout misconception"><strong>Common mistake.</strong> The ball is not held by a simple upward pushing jet alone. The confined fast flow lowers pressure in the gap, and the surrounding pressure also helps push it back toward the funnel.</div>
+  </section>
+  <section data-title="The physics" data-icon="ph-function">
+    <p>For steady, approximately incompressible flow, Bernoulli compares pressure and flow speed:</p>
+    $$p+\tfrac12\rho v^2+\rho gh=\text{constant}$$
+    <p>In this demonstration the local pressure difference is represented by an effective force. At $v=10\,\text{m/s}$ in air ($\rho=1.20\,\text{kg/m}^3$),</p>
+    $$\Delta p=\tfrac12\rho v^2=\tfrac12(1.20)(10^2)=60\,\text{Pa}$$
+    <p>This is an educational effective-force model, not a full 2D airflow calculation. It assumes approximately steady incompressible air and idealizes wall forces and leakage.</p>
+  </section>
+  <section data-title="Try this" data-icon="ph-flag">
+    <ol>
+      <li>In the upside-down position, set the airflow low and scrub until the ball reaches the funnel mouth.</li>
+      <li>Raise the airflow to 12 m/s, drag the ball outward, and let go. How far does it settle?</li>
+      <li>Flip the funnel upright. What happens when the airflow remains on?</li>
+      <li>Open the Pressure graph and compare $v$ and $\Delta p$; by what factor does pressure change if speed doubles?</li>
+    </ol>
+  </section>
+</div>
+
+<div class="app">
+  <aside class="dock left" id="settings" data-dock="settings" data-label="Settings" data-icon="ph-sliders-horizontal" data-open="false">
+    <div class="dock-head"><h3>Settings</h3></div>
+    <div class="dock-body"><div id="controls"></div><p class="ctl-hint">Tip: drag the ball and let go to release it.</p></div>
+  </aside>
+  <section class="stage-wrap">
+    <div class="stage" role="img" aria-label="Ping-pong ball and funnel with adjustable airflow">
+      <canvas id="stage"></canvas>
+      <div id="readouts" class="stage-readouts"></div>
+      <div id="tools" class="stage-tools"></div>
+    </div>
+    <div id="playbar"></div>
+  </section>
+  <aside class="dock right" id="graphdock" data-dock="graphs" data-label="Graphs" data-icon="ph-chart-line-up" data-open="true"></aside>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const { Sim } = window;
+  const RHO = 1.20, G = 9.81;
+  let tl = null, dragged = false;
+
+  const cv = Sim.canvas(document.getElementById('stage'), { onResize: () => { if (tl) tl.redraw(); } });
+  const ctl = Sim.controls(document.getElementById('controls'), [
+    { type: 'slider', id: 'air', label: 'Air speed', min: 0, max: 18, step: 0.5, value: 10, unit: 'm/s' },
+    { type: 'slider', id: 's0', label: 'Ball position', min: -0.05, max: 0.25, step: 0.01, value: 0, unit: 'm' },
+    { type: 'heading', label: 'Orientation' },
+    { type: 'select', id: 'orientation', label: 'Funnel direction', value: 'down', options: [
+      { value: 'down', label: 'Upside down · mouth down' },
+      { value: 'up', label: 'Upright · mouth up' }
+    ]},
+    { type: 'toggle', id: 'stream', label: 'Show airflow streaks', value: true }
+  ], () => { tools.refresh(); tl.recompute(); });
+
+  const tools = Sim.toolbar(document.getElementById('tools'), [
+    { type: 'segment', label: 'Orientation', value: () => ctl.values.orientation, onChange: (v) => {
+        ctl.set('orientation', v); ctl.set('s0', 0); tl.recompute(); tl.seek(0); tools.refresh();
+      },
+      options: [{ value: 'down', label: 'Upside down', icon: 'ph-arrow-down' }, { value: 'up', label: 'Upright', icon: 'ph-arrow-up' }] }
+  ]);
+  const ro = Sim.readouts(document.getElementById('readouts'), [
+    { id: 'v', label: 'Air speed' }, { id: 'p', label: 'Δp' }, { id: 'h', label: 'Outward position' },     { id: 'f', label: 'Axial acceleration' }
+  ]);
+
+  const cy = () => cv.h * 0.56;
+  const scale = () => Sim.clamp(cv.h * 0.0048, 2.4, 4.2);
+  const mouth = () => ctl.values.orientation === 'down' ? cy() + 118 : cy() - 118;
+  const outward = () => ctl.values.orientation === 'down' ? 1 : -1;
+  const ballY = (s) => mouth() + outward() * s * scale();
+  const idealPressure = () => 0.5 * RHO * ctl.values.air * ctl.values.air;
+  const pressureRestore = (s) => {
+    if (ctl.values.orientation !== 'down') return 0;
+    const gap = Sim.clamp(1 - Math.abs(s) / 0.22, 0.05, 1);
+    return idealPressure() * gap * 0.0296;
+  };
+
+  const handles = Sim.handles(cv, [{
+    id: 'ball', color: '--c1', radius: 17,
+    pos: () => [cv.w / 2, tl ? ballY(tl.state().s) : ballY(ctl.values.s0)],
+    label: () => `ball = ${ctl.values.s0.toFixed(2)} m`,
+    onStart: () => { tl.pause(); dragged = true; },
+    onDrag: (x, y) => {
+      const s = (y - mouth()) / (outward() * scale());
+      ctl.set('s0', Sim.clamp(Sim.snap(s, 0.01, 0.004), -0.05, 0.25));
+      tl.recompute(); tl.seek(0);
+    },
+    onEnd: () => tl.play()
+  }], { redraw: () => tl.redraw() });
+
+  tl = Sim.timeline({
+    duration: 8, dt: 1 / 240, every: 4,
+    init: () => ({ s: ctl.values.s0, v: 0 }),
+    step: (st, dt, t) => {
+      const [s, v] = Sim.rk4((_t, y) => {
+        const pRestore = pressureRestore(y[0]);
+        const damping = 2.2 * y[1];
+        const gravity = ctl.values.orientation === 'down' ? G * 0.12 : -G * 0.12;
+        const wall = Math.abs(y[0]) > 0.24 ? -18 * (Math.abs(y[0]) - 0.24) * Math.sign(y[0]) : 0;
+        const trap = ctl.values.orientation === 'down' ? -pRestore * y[0] * 6.7 : 0;
+        return [y[1], trap - damping + gravity + wall];
+      }, [st.s, st.v], t, dt);
+      st.s = Sim.clamp(s, -0.08, 0.28); st.v = v;
+    },
+    draw: (st, t) => {
+      const { ctx, w, h } = cv;
+      ctx.clearRect(0, 0, w, h);
+
+      ctx.strokeStyle = Sim.css('--sim-grid'); ctx.lineWidth = 1.5; ctx.setLineDash([5, 6]);
+      ctx.beginPath();
+      if (ctl.values.orientation === 'down') { ctx.moveTo(w / 2, mouth()); ctx.lineTo(w / 2, mouth() - 220); }
+      else { ctx.moveTo(w / 2, mouth()); ctx.lineTo(w / 2, mouth() + 220); }
+      ctx.stroke(); ctx.setLineDash([]);
+
+      ctx.fillStyle = Sim.alpha(Sim.css('--muted'), .65); ctx.font = `12px ${Sim.css('--mono')}`; ctx.textAlign = 'center';
+      ctx.fillText('airflow', w / 2 + 58, ctl.values.orientation === 'down' ? mouth() - 12 : mouth() + 20);
+
+      if (ctl.values.stream) {
+        ctx.strokeStyle = Sim.alpha(Sim.css('--c2'), .65); ctx.lineWidth = 2;
+        const dir = ctl.values.orientation === 'down' ? -1 : 1;
+        for (let i = -3; i <= 3; i++) {
+          const x = w / 2 + i * 18;
+          ctx.beginPath();
+          ctx.moveTo(x, ctl.values.orientation === 'down' ? h - 35 : 35);
+          ctx.bezierCurveTo(x, cy() + dir * 70, w / 2 + i * 8, cy() - dir * 20, w / 2 + i * 7, mouth());
+          ctx.stroke();
+        }
+      }
+
+      ctx.save(); ctx.translate(w / 2, cy());
+      if (ctl.values.orientation === 'up') ctx.rotate(Math.PI);
+      ctx.strokeStyle = Sim.css('--text'); ctx.lineWidth = 5; ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-112, 118); ctx.lineTo(-55, 18); ctx.quadraticCurveTo(-42, -38, -18, -52);
+      ctx.lineTo(18, -52); ctx.quadraticCurveTo(42, -38, 55, 18); ctx.lineTo(112, 118);
+      ctx.stroke(); ctx.restore();
+
+      ctx.strokeStyle = Sim.alpha(Sim.css('--c3'), .65); ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(w / 2, mouth(), 48, 12, 0, 0, Sim.TAU); ctx.stroke();
+
+      const bx = w / 2, by = ballY(st.s);
+      const gr = ctx.createRadialGradient(bx - 6, by - 8, 3, bx, by, 18);
+      gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.35, Sim.css('--c1')); gr.addColorStop(1, Sim.alpha(Sim.css('--c1'), .72));
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(bx, by, 18, 0, Sim.TAU); ctx.fill();
+      ctx.strokeStyle = Sim.alpha(Sim.css('--surface'), .9); ctx.lineWidth = 2; ctx.stroke();
+
+      if (!dragged) {
+        ctx.fillStyle = Sim.css('--muted'); ctx.font = `500 14px ${Sim.css('--font')}`; ctx.textAlign = 'center';
+        ctx.fillText('drag the ball, let go to release', bx, mouth() + (ctl.values.orientation === 'down' ? 92 : -92));
+      }
+
+      const pRestore = pressureRestore(st.s), damping = 2.2 * st.v;
+      const gravity = ctl.values.orientation === 'down' ? G * 0.12 : -G * 0.12;
+      const trap = ctl.values.orientation === 'down' ? -pRestore * st.s * 6.7 : 0;
+      const force = trap - damping + gravity;
+      handles.draw(ctx);
+      ro.set('v', Sim.fmt(ctl.values.air, 1) + ' m/s');
+      ro.set('p', Sim.fmt(idealPressure(), 0) + ' Pa');
+      ro.set('h', Sim.fmt(st.s, 2) + ' m');
+      ro.set('f', Sim.fmt(force, 2) + ' m/s²');
+    }
+  });
+  tl.recompute();
+  Sim.playbar(document.getElementById('playbar'), tl);
+
+  const dock = Sim.graphDock(document.getElementById('graphdock'));
+  dock.timeGraph(tl, { title: 'Ball position vs time', short: 'Position', icon: 'ph-ruler', yLabel: 'm', yUnit: 'm',
+    series: [{ name: 'outward s', color: '--c1', y: (s) => s.s }] });
+  dock.timeGraph(tl, { title: 'Pressure vs time', short: 'Pressure', icon: 'ph-wind', yLabel: 'Pa', yUnit: 'Pa', yMin: 0,
+    series: [{ name: 'Δp', color: '--c2', y: () => idealPressure() }] });
+  dock.timeGraph(tl, { title: 'Axial acceleration', short: 'Forces', icon: 'ph-arrows-vertical', yLabel: 'm/s²', yUnit: 'm/s²', symmetric: true, visible: false,
+    series: [
+      { name: 'trapping', color: '--c1', y: (state) => ctl.values.orientation === 'down' ? -pressureRestore(state.s) * state.s * 6.7 : 0 },
+      { name: 'gravity', color: '--c3', y: () => ctl.values.orientation === 'down' ? G * 0.12 : -G * 0.12 },
+      { name: 'drag', color: '--c4', y: (state) => -2.2 * state.v, dash: [5, 4], fill: false }
+    ] });
+  dock.timeGraph(tl, { title: 'Phase portrait v(s)', short: 'Phase', icon: 'ph-spiral', xy: true, xLabel: 's (m)', yLabel: 'v (m/s)', symmetric: true, visible: false,
+    series: [{ name: 'v vs s', color: '--c5', x: (state) => state.s, y: (state) => state.v }] });
+});
+</script>
+</body>
+</html>
