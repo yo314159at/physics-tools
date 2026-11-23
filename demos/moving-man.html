@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en" data-root="../">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Moving Man</title>
+<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t}catch(e){}})()</script>
+<link rel="stylesheet" href="../css/site.css">
+<script src="../js/site.js" defer></script>
+<script src="../js/sim.js" defer></script>
+<script type="application/json" id="demo-meta">
+{"id":"moving-man","title":"The Moving Man","summary":"Drag the man or type position, velocity, and acceleration, then replay the motion on live graphs.","topic":"mechanics","level":"high-school","order":5}
+</script>
+</head>
+<body class="demo">
+<div id="more" hidden>
+  <section data-title="Predict first" data-icon="ph-question">
+    <p class="predict-q">If the man has constant positive acceleration, can his velocity become negative later?</p>
+    <details class="reveal"><summary>Show the answer</summary><p>Yes. If he starts moving left fast enough, positive acceleration first slows him, then reverses his direction.</p></details>
+  </section>
+  <section data-title="What to notice" data-icon="ph-eye">
+    <ul><li>The slope of the position graph is velocity.</li><li>The slope of the velocity graph is acceleration.</li><li>A negative velocity means the man is moving left, not that his position is negative.</li></ul>
+    <div class="callout misconception"><strong>Common mistake.</strong> Position, velocity, and acceleration are different quantities; a flat position graph means zero velocity.</div>
+  </section>
+  <section data-title="The physics" data-icon="ph-function">
+    $$x(t)=x_0+v_0t+\tfrac12at^2,\qquad v(t)=v_0+at$$
+    <p>The model assumes one-dimensional motion with constant acceleration. The track is drawn wider than the visible scene so the man can move through the full run.</p>
+  </section>
+  <section data-title="Try this" data-icon="ph-flag">
+    <ol><li>Set $v_0=-4$ m/s and $a=2$ m/s². Scrub to the instant he turns around.</li><li>Make the position graph a straight line. What must acceleration be?</li><li>Drag the man while the timeline is paused, then replay the new motion.</li></ol>
+  </section>
+</div>
+<div class="app">
+  <aside class="dock left" id="settings" data-dock="settings" data-label="Settings" data-icon="ph-sliders-horizontal" data-open="false">
+    <div class="dock-head"><h3>Settings</h3></div><div class="dock-body"><div id="controls"></div><p class="ctl-hint">The sliders are precise twins of the draggable man.</p></div>
+  </aside>
+  <section class="stage-wrap">
+    <div class="stage" role="img" aria-label="A man walking along a one-dimensional track">
+      <canvas id="stage"></canvas><div id="readouts" class="stage-readouts"></div><div id="tools" class="stage-tools"></div>
+    </div><div id="playbar"></div>
+  </section>
+  <aside class="dock right" id="graphdock" data-dock="graphs" data-label="Graphs" data-icon="ph-chart-line-up" data-open="true"></aside>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const { Sim } = window; let tl = null; let dragged = false;
+  const cv = Sim.canvas(document.getElementById('stage'), { onResize: () => tl && tl.redraw() });
+  const ctl = Sim.controls(document.getElementById('controls'), [
+    {type:'slider',id:'x0',label:'Position',min:-10,max:10,step:.1,value:0,unit:'m'},
+    {type:'slider',id:'v0',label:'Velocity',min:-8,max:8,step:.1,value:2,unit:'m/s'},
+    {type:'slider',id:'a',label:'Acceleration',min:-4,max:4,step:.1,value:0,unit:'m/s²'},
+    {type:'slider',id:'duration',label:'Run time',min:4,max:16,step:1,value:10,unit:'s'}
+  ], () => { if (tl) tl.recompute(); });
+  const ro = Sim.readouts(document.getElementById('readouts'), [{id:'t',label:'Time'},{id:'x',label:'Position'},{id:'v',label:'Velocity'},{id:'a',label:'Acceleration'}]);
+  const world = () => ({x0:ctl.values.x0,v0:ctl.values.v0,a:ctl.values.a});
+  const sx = () => Math.min((cv.w - 100) / 24, 28), trackY = () => cv.h * .62, px = x => cv.w / 2 + x * sx();
+  const handles = Sim.handles(cv, [{
+    id:'man',color:'--c1',radius:18,pos:() => [px(tl ? tl.state().x : ctl.values.x0),trackY()-32],
+    label:() => `${Sim.fmt(tl ? tl.state().x : ctl.values.x0,1)} m`,
+    onStart:()=>{tl.pause();dragged=true}, onDrag:x=>{ctl.set('x0',Sim.clamp((x-cv.w/2)/sx(),-10,10));tl.recompute();tl.seek(0)}, onEnd:()=>tl.play()
+  }], {redraw:()=>tl.redraw()});
+  tl = Sim.timeline({
+    duration:()=>ctl.values.duration, at:t=>{const p=world(),x=p.x0+p.v0*t+.5*p.a*t*t;return{x,v:p.v0+p.a*t,a:p.a}},
+    draw:(s,t)=>{
+      const {ctx,w,h}=cv, y=trackY(), k=sx(); ctx.clearRect(0,0,w,h);
+      ctx.strokeStyle=Sim.css('--sim-ink');ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(30,y);ctx.lineTo(w-30,y);ctx.stroke();
+      for(let x=-10;x<=10;x++){const q=px(x);ctx.strokeStyle=Sim.css('--sim-grid');ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q,y-8);ctx.lineTo(q,y+8);ctx.stroke(); if(x%2===0){ctx.fillStyle=Sim.css('--muted');ctx.font=`11px ${Sim.css('--mono')}`;ctx.textAlign='center';ctx.fillText(x+' m',q,y+27)}}
+      const houseX=px(-8), treeX=px(8); ctx.fillStyle=Sim.css('--c3');ctx.fillRect(houseX-24,y-94,48,62);ctx.beginPath();ctx.moveTo(houseX-32,y-94);ctx.lineTo(houseX,y-124);ctx.lineTo(houseX+32,y-94);ctx.fill();ctx.fillStyle=Sim.css('--c5');ctx.beginPath();ctx.arc(treeX,y-75,25,0,Sim.TAU);ctx.fill();ctx.fillStyle=Sim.css('--sim-ink');ctx.fillRect(treeX-5,y-50,10,50);
+      const mx=px(Sim.clamp(s.x,-11,11));ctx.strokeStyle=Sim.css('--text');ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(mx,y-25);ctx.lineTo(mx,y-2);ctx.stroke();ctx.beginPath();ctx.arc(mx,y-38,10,0,Sim.TAU);ctx.stroke();ctx.beginPath();ctx.moveTo(mx,y-18);ctx.lineTo(mx-13,y-8);ctx.moveTo(mx,y-18);ctx.lineTo(mx+13,y-8);ctx.moveTo(mx,y-2);ctx.lineTo(mx-10,y+12);ctx.moveTo(mx,y-2);ctx.lineTo(mx+10,y+12);ctx.stroke();
+      if(Math.abs(s.v)>0.05) Sim.arrow(ctx,mx,y-38,mx+s.v*k*.5,y-38,{color:Sim.css('--c2'),width:3});
+      handles.draw(ctx); ro.set('t',Sim.fmt(t)+' s');ro.set('x',Sim.fmt(s.x,2)+' m');ro.set('v',Sim.fmt(s.v,2)+' m/s');ro.set('a',Sim.fmt(s.a,2)+' m/s²');
+    }
+  });
+  tl.recompute(); Sim.playbar(document.getElementById('playbar'),tl);
+  const dock=Sim.graphDock(document.getElementById('graphdock'));
+  dock.timeGraph(tl,{title:'Position x(t)',short:'Position',icon:'ph-ruler',yLabel:'m',yUnit:'m',series:[{name:'x',color:'--c1',y:s=>s.x}]});
+  dock.timeGraph(tl,{title:'Velocity v(t)',short:'Velocity',icon:'ph-arrow-up-right',yLabel:'m/s',yUnit:'m/s',symmetric:true,series:[{name:'v',color:'--c2',y:s=>s.v}]});
+  dock.timeGraph(tl,{title:'Acceleration a(t)',short:'Acceleration',icon:'ph-gauge',yLabel:'m/s²',yUnit:'m/s²',symmetric:true,visible:false,series:[{name:'a',color:'--c3',y:s=>s.a}]});
+});
+</script>
+</body>
+</html>
