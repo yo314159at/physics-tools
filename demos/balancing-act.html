@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en" data-root="../">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Balancing Act</title>
+<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t}catch(e){}})()</script>
+<link rel="stylesheet" href="../css/site.css"><script src="../js/site.js" defer></script><script src="../js/sim.js" defer></script>
+<script type="application/json" id="demo-meta">{"id":"balancing-act","title":"Balancing Act","summary":"Place masses on a plank and drag them along the ruler to balance clockwise and counterclockwise torque.","topic":"mechanics","level":"high-school","order":25}</script>
+</head>
+<body class="demo">
+<div id="more" hidden>
+<section data-title="Predict first" data-icon="ph-question"><p class="predict-q">Can a 5 kg mass balance a 20 kg mass? Where must each mass sit?</p><details class="reveal"><summary>Show the answer</summary><p>Yes. The 20 kg mass can sit one quarter as far from the pivot as the 5 kg mass.</p></details></section>
+<section data-title="What to notice" data-icon="ph-eye"><ul><li>Torque depends on force and perpendicular distance.</li><li>Moving a mass farther from the pivot increases its torque.</li><li>Equal torque on opposite sides produces rotational equilibrium.</li></ul><div class="callout misconception"><strong>Common mistake.</strong> Equal mass does not always produce balance; distance from the pivot matters too.</div></section>
+<section data-title="The physics" data-icon="ph-function">$$\tau=rF_\perp=rmg,\qquad \sum\tau=0$$<p>For this horizontal plank, counterclockwise torque is positive and clockwise torque is negative.</p></section>
+<section data-title="Try this" data-icon="ph-flag"><ol><li>Place a 10 kg mass at 2 m left and a 5 kg mass at 4 m right.</li><li>Add an unknown mass in the lab and solve for it using torque balance.</li><li>Move one mass without changing its weight and predict whether the plank tips left or right.</li></ol></section>
+</div>
+<div class="app">
+<aside class="dock left" id="settings" data-dock="settings" data-label="Settings" data-icon="ph-sliders-horizontal" data-open="false"><div class="dock-head"><h3>Settings</h3></div><div class="dock-body"><div id="controls"></div></div></aside>
+<section class="stage-wrap"><div class="stage" role="img" aria-label="A plank balanced on a fulcrum"><canvas id="stage"></canvas><div id="readouts" class="stage-readouts"></div><div id="tools" class="stage-tools"></div></div><div id="playbar"></div></section>
+<aside class="dock right" id="graphdock" data-dock="graphs" data-label="Graphs" data-icon="ph-chart-line-up" data-open="true"></aside>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{const{Sim}=window;let tl=null;const cv=Sim.canvas(document.getElementById('stage'),{onResize:()=>tl&&tl.redraw()});
+const ctl=Sim.controls(document.getElementById('controls'),[{type:'slider',id:'mLeft',label:'Left mass',min:1,max:20,step:1,value:5,unit:'kg'},{type:'slider',id:'rLeft',label:'Left distance',min:-5,max:-.5,step:.5,value:-2,unit:'m'},{type:'slider',id:'mRight',label:'Right mass',min:1,max:20,step:1,value:10,unit:'kg'},{type:'slider',id:'rRight',label:'Right distance',min:.5,max:5,step:.5,value:1,unit:'m'}],()=>tl&&tl.recompute());
+const ro=Sim.readouts(document.getElementById('readouts'),[{id:'net',label:'Net torque'},{id:'left',label:'Left torque'},{id:'right',label:'Right torque'},{id:'state',label:'State'}]);const px=(r)=>cv.w/2+r*(cv.w*.075);const py=()=>cv.h*.62;const torque=()=>({left:-ctl.values.rLeft*ctl.values.mLeft*9.81,right:ctl.values.rRight*ctl.values.mRight*9.81});tl=Sim.timeline({duration:1,at:()=>({}),draw:()=>{const{ctx,w,h}=cv;ctx.clearRect(0,0,w,h);const y=py(),cx=w/2,t=torque(),net=t.right-t.left,balance=Math.abs(net)<20,angle=Sim.clamp(net/450,-.12,.12);ctx.save();ctx.translate(cx,y);ctx.rotate(angle);ctx.fillStyle=Sim.css('--c1');ctx.fillRect(-w*.38,-12,w*.76,24);for(let r=-5;r<=5;r++){const x=r*(w*.075);ctx.strokeStyle=Sim.css('--sim-grid');ctx.beginPath();ctx.moveTo(x,-12);ctx.lineTo(x,-24);ctx.stroke();ctx.fillStyle=Sim.css('--muted');ctx.font=`11px ${Sim.css('--mono')}`;ctx.textAlign='center';ctx.fillText(r,x,30)}ctx.fillStyle=Sim.css('--c3');ctx.fillRect(px(ctl.values.rLeft)-cx-18,-70,36,58);ctx.fillStyle=Sim.css('--c2');ctx.fillRect(px(ctl.values.rRight)-cx-18,-70,36,58);ctx.restore();ctx.fillStyle=Sim.css('--sim-ink');ctx.beginPath();ctx.moveTo(cx,y+12);ctx.lineTo(cx-45,h-25);ctx.lineTo(cx+45,h-25);ctx.closePath();ctx.fill();ro.set('net',Sim.fmt(net,1)+' N·m');ro.set('left',Sim.fmt(t.left,1)+' N·m');ro.set('right',Sim.fmt(t.right,1)+' N·m');ro.set('state',balance?'Balanced':'Tips '+(net>0?'right':'left'));}});tl.recompute();Sim.playbar(document.getElementById('playbar'),tl);const dock=Sim.graphDock(document.getElementById('graphdock'));dock.timeGraph(tl,{title:'Torque balance',short:'Torque',icon:'ph-arrows-left-right',yLabel:'N·m',yUnit:'N·m',symmetric:true,series:[{name:'left',color:'--c3',y:()=>torque().left},{name:'right',color:'--c2',y:()=>torque().right},{name:'net',color:'--c5',y:()=>torque().right-torque().left,fill:false}]});});
+</script>
+</body>
+</html>
